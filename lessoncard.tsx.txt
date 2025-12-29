@@ -1,0 +1,16 @@
+
+import React from 'react';
+import { BookOpen } from 'lucide-react';
+import { audio } from './audio';
+
+export const LessonCard = ({ type, isActive, onSelect }: any) => (
+  <button 
+    onClick={() => { audio.playClick(); onSelect(); }}
+    className={`w-full text-left p-5 rounded-2xl border transition-all ${
+      isActive ? 'bg-violet-600 border-violet-400 scale-[1.02] shadow-xl shadow-violet-600/20' : 'bg-slate-800/50 border-white/5 hover:border-white/20'
+    }`}
+  >
+    <BookOpen className="text-violet-400 mb-3" size={20} />
+    <h4 className="font-bold text-white text-sm">{type}</h4>
+  </button>
+);

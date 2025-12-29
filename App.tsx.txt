@@ -1,0 +1,122 @@
+
+import React, { useState, useEffect } from 'react';
+import { LessonType } from './types';
+import { audio } from './audio';
+import { getLessonExplanation } from './gemini';
+import CircleSandbox from './CircleSandbox';
+import AITutor from './AITutor';
+import { LessonCard } from './LessonCard';
+import { LogOut, GraduationCap, Circle, Sparkles, Radius } from 'lucide-react';
+
+const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [name, setName] = useState('');
+  const [active, setActive] = useState(LessonType.BASICS);
+  const [content, setContent] = useState('Fetching circle secrets from AI...');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      setLoading(true);
+      getLessonExplanation(active)
+        .then(setContent)
+        .finally(() => setLoading(false));
+    }
+  }, [isLoggedIn, active]);
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen math-grid flex items-center justify-center bg-[#020617]">
+        <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 p-12 rounded-[3rem] w-full max-w-md text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+          <div className="w-20 h-20 bg-violet-600 rounded-full mx-auto mb-8 flex items-center justify-center shadow-xl shadow-violet-600/30">
+            <Circle size={40} className="text-white" />
+          </div>
+          <h1 className="text-4xl font-black italic mb-2 text-white">Circle<span className="text-violet-500">Master</span></h1>
+          <p className="text-slate-500 text-sm mb-10 font-medium tracking-wide">AI-Powered Circle Geometry</p>
+          <input 
+            value={name} 
+            onChange={e => setName(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && name && setIsLoggedIn(true)}
+            placeholder="What is your name?" 
+            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-violet-500 text-white placeholder-slate-600"
+          />
+          <button 
+            disabled={!name}
+            onClick={() => { audio.playClick(); setIsLoggedIn(true); }}
+            className="w-full bg-violet-600 py-5 rounded-2xl font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-violet-600/20 text-white disabled:opacity-50 disabled:scale-100"
+          >
+            Start Learning
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-200 math-grid pb-20">
+      <nav className="p-8 border-b border-white/5 flex justify-between items-center max-w-7xl mx-auto backdrop-blur-sm sticky top-0 z-50">
+        <div className="flex items-center gap-4 group cursor-default">
+          <div className="bg-violet-600 p-2 rounded-full group-hover:rotate-180 transition-transform duration-700 shadow-lg shadow-violet-600/20">
+            <Circle size={24} className="text-white"/>
+          </div>
+          <h1 className="text-2xl font-black italic text-white">CircleMaster</h1>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">Mastering Circles</p>
+            <p className="font-bold text-white tracking-tight">{name}</p>
+          </div>
+          <button 
+            onClick={() => { audio.playClick(); setIsLoggedIn(false); }} 
+            className="p-4 bg-slate-800 rounded-2xl hover:bg-rose-500/10 hover:text-rose-500 transition-all border border-white/5"
+          >
+            <LogOut size={20}/>
+          </button>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
+        <div className="lg:col-span-3 space-y-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-6 px-2">Knowledge Path</h2>
+          {Object.values(LessonType).map(t => (
+            <LessonCard key={t} type={t} isActive={active === t} onSelect={() => setActive(t)} />
+          ))}
+        </div>
+
+        <div className="lg:col-span-6 space-y-12">
+          <section className="bg-slate-900/50 backdrop-blur-md p-8 md:p-10 rounded-[2.5rem] border border-white/5 min-h-[400px] shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-violet-600/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="flex items-center gap-3 mb-6">
+              <Sparkles className="text-violet-400" size={18} />
+              <span className="text-[10px] font-black uppercase text-violet-400 tracking-widest">AI Expert Insight</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-8 italic text-white leading-tight">{active}</h2>
+            <div className={`text-lg md:text-xl text-slate-300 leading-relaxed whitespace-pre-wrap transition-opacity duration-300 ${loading ? 'opacity-30' : 'opacity-100'}`}>
+              {content}
+            </div>
+            {loading && (
+              <div className="mt-8 flex items-center gap-2 text-violet-400 text-sm italic font-medium">
+                <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin"></div>
+                Analyzing Circle Theorems...
+              </div>
+            )}
+          </section>
+          
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            <CircleSandbox />
+          </div>
+        </div>
+
+        <div className="lg:col-span-3">
+          <div className="sticky top-28">
+            <AITutor />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default App;

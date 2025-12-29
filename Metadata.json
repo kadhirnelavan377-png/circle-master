@@ -1,0 +1,8 @@
+
+{
+  "name": "CircleMaster AI",
+  "description": "An interactive, AI-powered learning platform for mastering circle geometry.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -1,0 +1,127 @@
+
+import React, { useEffect, useRef, useState } from 'react';
+import { select, drag } from 'd3';
+import { Point, CircleState } from './types';
+
+const CircleSandbox: React.FC = () => {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [circle, setCircle] = useState<CircleState>({
+    center: { x: 250, y: 225 },
+    radius: 120
+  });
+
+  const [stats, setStats] = useState({
+    circumference: 0,
+    area: 0,
+    diameter: 0
+  });
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const { center, radius } = circle;
+
+    // Draw Diameter line (background)
+    svg.append('line')
+      .attr('x1', center.x - radius).attr('y1', center.y)
+      .attr('x2', center.x + radius).attr('y2', center.y)
+      .attr('stroke', '#334155').attr('stroke-width', 2).attr('stroke-dasharray', '4,4');
+
+    // Draw Main Circle
+    svg.append('circle')
+      .attr('cx', center.x).attr('cy', center.y).attr('r', radius)
+      .attr('fill', 'rgba(139, 92, 246, 0.1)')
+      .attr('stroke', '#a78bfa').attr('stroke-width', 4);
+
+    // Draw Radius Line
+    svg.append('line')
+      .attr('x1', center.x).attr('y1', center.y)
+      .attr('x2', center.x + radius).attr('y2', center.y)
+      .attr('stroke', '#f43f5e').attr('stroke-width', 4).attr('stroke-linecap', 'round');
+
+    // Drag Behavior for Center
+    const dragCenter = drag<SVGCircleElement, any>()
+      .on('drag', (event) => {
+        setCircle(prev => ({ ...prev, center: { x: event.x, y: event.y } }));
+      });
+
+    // Drag Behavior for Radius Handle
+    const dragRadius = drag<SVGCircleElement, any>()
+      .on('drag', (event) => {
+        const dx = event.x - circle.center.x;
+        const dy = event.y - circle.center.y;
+        const newRadius = Math.max(20, Math.sqrt(dx * dx + dy * dy));
+        setCircle(prev => ({ ...prev, radius: newRadius }));
+      });
+
+    // Center Handle
+    svg.append('circle')
+      .attr('cx', center.x).attr('cy', center.y).attr('r', 8)
+      .attr('fill', '#8b5cf6').attr('cursor', 'move').call(dragCenter as any);
+
+    // Radius Handle (on the edge)
+    svg.append('circle')
+      .attr('cx', center.x + radius).attr('cy', center.y).attr('r', 10)
+      .attr('fill', '#f43f5e').attr('cursor', 'ew-resize').call(dragRadius as any);
+
+    // Labels
+    svg.append('text')
+      .attr('x', center.x).attr('y', center.y - 15)
+      .attr('fill', '#a78bfa').attr('font-size', '12px').attr('font-weight', 'bold').attr('text-anchor', 'middle')
+      .text('Center');
+
+    svg.append('text')
+      .attr('x', center.x + radius / 2).attr('y', center.y - 10)
+      .attr('fill', '#fb7185').attr('font-size', '12px').attr('font-weight', 'bold').attr('text-anchor', 'middle')
+      .text('r');
+
+    // Calculations
+    const c = 2 * Math.PI * radius;
+    const a = Math.PI * radius * radius;
+    setStats({
+      circumference: Math.round(c * 100) / 100,
+      area: Math.round(a * 100) / 100,
+      diameter: Math.round(radius * 2 * 100) / 100
+    });
+
+  }, [circle]);
+
+  return (
+    <div className="bg-slate-900 rounded-[2rem] p-8 border border-white/10 shadow-2xl">
+      <div className="flex flex-col md:flex-row gap-10 items-center">
+        <div className="relative">
+          <svg ref={svgRef} width="500" height="450" className="bg-slate-950/50 rounded-2xl border border-white/5"></svg>
+          <div className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-lg border border-white/10 text-xs font-mono">
+            Radius: {Math.round(circle.radius)} units
+          </div>
+        </div>
+        <div className="space-y-4 flex-1 w-full">
+          <div className="grid grid-cols-2 gap-4">
+            <StatBox label="Diameter (2r)" value={stats.diameter} color="text-violet-400" />
+            <StatBox label="Circumference (2πr)" value={stats.circumference} color="text-rose-400" />
+            <StatBox label="Area (πr²)" value={stats.area} color="text-emerald-400" />
+            <StatBox label="Pi (π)" value="~3.14159" color="text-amber-400" />
+          </div>
+          <div className="bg-violet-600/10 p-6 rounded-2xl border border-violet-500/20 mt-4">
+            <h4 className="text-violet-400 font-black uppercase tracking-widest text-[10px] mb-2">Interactive Guide</h4>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Drag the <span className="text-violet-400 font-bold">Violet Center</span> to reposition the circle. <br/>
+              Drag the <span className="text-rose-400 font-bold">Red Handle</span> to change the radius and see values update live!
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatBox = ({ label, value, color }: any) => (
+  <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter mb-1">{label}</p>
+    <p className={`text-xl font-black ${color}`}>{value}</p>
+  </div>
+);
+
+export default CircleSandbox;
